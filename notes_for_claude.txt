@@ -1,0 +1,3 @@
+Claude, read this file for my notes to you.
+
+Right now the room says loading and waiting for players and for the host to start.  
