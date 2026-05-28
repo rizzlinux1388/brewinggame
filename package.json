@@ -10,10 +10,10 @@
     "postinstall": "prisma generate || true",
     "test": "jest",
     "test:watch": "jest --watch",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed",
-    "db:studio": "prisma studio",
-    "db:generate": "prisma generate"
+    "db:migrate": "dotenv -c -- prisma migrate dev",
+    "db:seed": "dotenv -c -- prisma db seed",
+    "db:studio": "dotenv -c -- prisma studio",
+    "db:generate": "dotenv -c -- prisma generate"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
@@ -39,6 +39,7 @@
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.16",
     "jest": "^29.7.0",
