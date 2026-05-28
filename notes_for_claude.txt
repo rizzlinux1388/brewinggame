@@ -1,6 +1,0 @@
-In hearts I can pass cards to the left, I never receive cards from the player to my right. 
-Also I can select a card but cannot play it.
-
-Passing cards in Go-fish is not part of the rules.
-
-When creating a custom game, there's no way to play it.

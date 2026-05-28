@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 type GameDef = {
@@ -28,6 +28,7 @@ type Room = {
 export default function LobbyPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [games, setGames] = useState<GameDef[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [selectedGame, setSelectedGame] = useState<GameDef | null>(null)
@@ -35,13 +36,33 @@ export default function LobbyPage() {
   const [aiCount, setAiCount] = useState(1)
 
   useEffect(() => {
-    fetch('/api/game-definitions?builtIn=true')
-      .then((r) => r.json())
-      .then(setGames)
+    Promise.all([
+      fetch('/api/game-definitions?builtIn=true').then((r) => r.json()),
+      fetch('/api/game-definitions?mine=true').then((r) => r.json()),
+    ]).then(([builtIn, mine]: [GameDef[], GameDef[]]) => {
+      const seen = new Set<string>()
+      const merged: GameDef[] = []
+      for (const g of [...builtIn, ...mine]) {
+        if (!seen.has(g.id)) {
+          seen.add(g.id)
+          merged.push(g)
+        }
+      }
+      setGames(merged)
+    })
     fetch('/api/rooms')
       .then((r) => r.json())
       .then(setRooms)
   }, [])
+
+  // Pre-select game from ?game= query param once games are loaded
+  useEffect(() => {
+    const gameId = searchParams.get('game')
+    if (gameId && games.length > 0 && !selectedGame) {
+      const found = games.find((g) => g.id === gameId)
+      if (found) setSelectedGame(found)
+    }
+  }, [games, searchParams])
 
   useEffect(() => {
     if (selectedGame) {
@@ -97,7 +118,14 @@ export default function LobbyPage() {
                     : 'bg-gray-900 border-gray-800 hover:border-gray-600'
                 }`}
               >
-                <div className="font-medium text-white">{game.name}</div>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-white">{game.name}</span>
+                  {!game.isBuiltIn && (
+                    <span className="text-xs text-purple-400 bg-purple-900/40 px-2 py-0.5 rounded-full">
+                      Custom
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-gray-400 mt-0.5">
                   {game.minPlayers}–{game.maxPlayers} players
                 </div>

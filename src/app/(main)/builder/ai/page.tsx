@@ -87,7 +87,8 @@ export default function AICreatorPage() {
     })
 
     if (res.ok) {
-      router.push('/games')
+      const saved = await res.json()
+      router.push(`/lobby?game=${saved.id}`)
     } else {
       const data = await res.json()
       setErrors([data.error ?? 'Failed to save'])

@@ -32,8 +32,9 @@ export default function BuilderWizardPage() {
     })
 
     if (res.ok) {
+      const saved = await res.json()
       store.reset()
-      router.push('/games')
+      router.push(`/lobby?game=${saved.id}`)
     }
     setSaving(false)
   }

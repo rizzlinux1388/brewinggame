@@ -475,6 +475,22 @@ function maybeScheduleAIMove(
             winningSeat: event.winner,
             pointsScored: event.points.map((p) => ({ seatPosition: p.seat, points: p.pts })),
           })
+        } else if (event.type === 'hand-complete') {
+          io.to(roomId).emit('game:hand-complete', {
+            scores: event.scores.map((s) => ({
+              seatPosition: s.seat,
+              total: s.total,
+              roundPoints: s.roundPoints,
+            })),
+            shootTheMoon: event.shootTheMoon !== undefined
+              ? { seatPosition: event.shootTheMoon }
+              : undefined,
+          })
+        } else if (event.type === 'phase-changed') {
+          const phase = result.newState.definition.phases.find((p) => p.id === event.phaseId)
+          if (phase) {
+            io.to(roomId).emit('game:phase-changed', { phaseId: event.phaseId, phase })
+          }
         } else if (event.type === 'game-over') {
           io.to(roomId).emit('game:ended', {
             finalScores: event.finalScores.map((s) => ({
@@ -492,6 +508,23 @@ function maybeScheduleAIMove(
       }
 
       if (!result.newState.isGameOver) {
+        // Update hands for all connected players after every AI move
+        const sockets = await io.in(roomId).fetchSockets()
+        for (const s of sockets) {
+          const uid = s.data.userId
+          const p = participants.find((par) => par.userId === uid)
+          if (p) {
+            s.emit('game:your-hand', {
+              cards: result.newState.players[p.seatPosition].hand.map((c) => ({
+                id: c.id,
+                suitId: c.suitId,
+                rankId: c.rankId,
+              })),
+            })
+          }
+        }
+
+        await notifyCurrentPlayer(io, roomId, result.newState, participants)
         maybeScheduleAIMove(io, roomId, result.newState, participants)
       }
     } catch (err) {

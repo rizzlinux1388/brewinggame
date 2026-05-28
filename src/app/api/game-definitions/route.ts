@@ -8,11 +8,21 @@ import { z } from 'zod'
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const builtIn = searchParams.get('builtIn')
+  const mine = searchParams.get('mine')
   const tag = searchParams.get('tag')
   const search = searchParams.get('search')
 
-  const where: Record<string, unknown> = { isPublished: true }
-  if (builtIn === 'true') where.isBuiltIn = true
+  let where: Record<string, unknown>
+
+  if (mine === 'true') {
+    const session = await getServerSession(authOptions)
+    if (!session) return NextResponse.json([])
+    where = { authorId: session.user.id, isBuiltIn: false }
+  } else {
+    where = { isPublished: true }
+    if (builtIn === 'true') where.isBuiltIn = true
+  }
+
   if (tag) where.tags = { has: tag }
   if (search) {
     where.OR = [

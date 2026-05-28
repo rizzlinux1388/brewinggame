@@ -23,8 +23,8 @@ export default function GameRoomPage() {
   const store = useGameStore()
 
   useEffect(() => {
+    store.reset()
     store.setRoom(roomId)
-    store.setStatus('waiting')
   }, [roomId])
 
   if (store.gameResult) {
