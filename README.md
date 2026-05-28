@@ -36,10 +36,15 @@ npm install
 Copy the example file and fill in your values:
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
-Open `.env.local` and fill in:
+> **Use `.env`, not `.env.local`.** The Prisma CLI (`db:migrate`, `db:seed`,
+> `db:generate`) only auto-loads `.env`. Next.js reads both, but if you put your
+> connection string only in `.env.local` the Prisma CLI will fail with
+> `datasource.url property is required`.
+
+Open `.env` and fill in:
 
 ```bash
 # PostgreSQL connection string
@@ -179,7 +184,7 @@ The test suite covers the game engine: card dealing, pass phase, trick-taking me
 
 ## Optional: GitHub / Google OAuth
 
-Add these to `.env.local` if you want social login:
+Add these to `.env` if you want social login:
 
 ```bash
 GITHUB_CLIENT_ID=""
