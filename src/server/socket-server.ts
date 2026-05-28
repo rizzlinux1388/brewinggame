@@ -16,6 +16,17 @@ import { nanoid } from './nanoid'
 type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
 type TypedIO = SocketIOServer<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>
 
+// Minimal shape of a participant row as read from Prisma. Annotated explicitly
+// so the file type-checks regardless of whether the Prisma client has been
+// generated (ts-node type-checks the whole import graph at startup).
+type ParticipantRow = {
+  seatPosition: number
+  userId: string | null
+  type: string
+  aiDifficulty?: string | null
+  isConnected: boolean
+}
+
 const AI_MOVE_DELAY_MS = 900
 
 export function initSocketServer(io: TypedIO) {
@@ -54,7 +65,7 @@ export function initSocketServer(io: TypedIO) {
         // Notify room of new player
         socket.to(payload.roomId).emit('room:player-joined', {
           participant: {
-            seatPosition: room.participants.find((p) => p.userId === payload.userId)?.seatPosition ?? -1,
+            seatPosition: room.participants.find((p: ParticipantRow) => p.userId === payload.userId)?.seatPosition ?? -1,
             userId: payload.userId ?? null,
             username: socket.data.username,
             isAI: false,
@@ -65,7 +76,7 @@ export function initSocketServer(io: TypedIO) {
         // If game in progress, send current state
         if (room.status === 'IN_PROGRESS' && room.gameState) {
           const state = deserializeState(room.gameState as object)
-          const playerSeat = room.participants.find((p) => p.userId === payload.userId)?.seatPosition ?? -1
+          const playerSeat = room.participants.find((p: ParticipantRow) => p.userId === payload.userId)?.seatPosition ?? -1
 
           socket.emit('game:state-update', buildStateUpdate(room.id, state))
 
@@ -102,7 +113,7 @@ export function initSocketServer(io: TypedIO) {
         if (room.status !== 'WAITING') return
 
         const definition = room.gameDefinition.schema as unknown as GameDefinition
-        const participants = room.participants.map((p) => ({
+        const participants = room.participants.map((p: ParticipantRow) => ({
           seatPosition: p.seatPosition,
           isAI: p.type === 'AI',
         }))
@@ -123,7 +134,7 @@ export function initSocketServer(io: TypedIO) {
         io.to(payload.roomId).emit('room:game-started', {
           roomId: payload.roomId,
           definition,
-          seatAssignments: room.participants.map((p) => ({
+          seatAssignments: room.participants.map((p: ParticipantRow) => ({
             seatPosition: p.seatPosition,
             userId: p.userId,
             username: p.type === 'AI' ? `AI (${p.aiDifficulty ?? 'medium'})` : 'Player',
@@ -139,7 +150,7 @@ export function initSocketServer(io: TypedIO) {
         const sockets = await io.in(payload.roomId).fetchSockets()
         for (const s of sockets) {
           const uid = s.data.userId
-          const participant = room.participants.find((p) => p.userId === uid)
+          const participant = room.participants.find((p: ParticipantRow) => p.userId === uid)
           if (participant) {
             s.emit('game:your-hand', {
               cards: state.players[participant.seatPosition].hand.map((c) => ({
@@ -174,7 +185,7 @@ export function initSocketServer(io: TypedIO) {
         }
 
         const state = deserializeState(room.gameState as object)
-        const participant = room.participants.find((p) => p.userId === socket.data.userId)
+        const participant = room.participants.find((p: ParticipantRow) => p.userId === socket.data.userId)
         if (!participant) {
           cb({ success: false, reason: 'Not a participant' })
           return
@@ -247,12 +258,12 @@ export function initSocketServer(io: TypedIO) {
             io.to(payload.roomId).emit('game:ended', {
               finalScores: event.finalScores.map((s) => ({
                 seatPosition: s.seat,
-                userId: room.participants.find((p) => p.seatPosition === s.seat)?.userId ?? null,
+                userId: room.participants.find((p: ParticipantRow) => p.seatPosition === s.seat)?.userId ?? null,
                 totalScore: s.total,
               })),
               winners: event.winners.map((w) => ({
                 seatPosition: w,
-                userId: room.participants.find((p) => p.seatPosition === w)?.userId ?? null,
+                userId: room.participants.find((p: ParticipantRow) => p.seatPosition === w)?.userId ?? null,
               })),
               reason: 'score-threshold',
             })
@@ -264,7 +275,7 @@ export function initSocketServer(io: TypedIO) {
           const sockets = await io.in(payload.roomId).fetchSockets()
           for (const s of sockets) {
             const uid = s.data.userId
-            const p = room.participants.find((par) => par.userId === uid)
+            const p = room.participants.find((par: ParticipantRow) => par.userId === uid)
             if (p) {
               s.emit('game:your-hand', {
                 cards: newState.players[p.seatPosition].hand.map((c) => ({
