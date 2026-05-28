@@ -1,3 +1,6 @@
+import { loadEnvConfig } from '@next/env'
+loadEnvConfig(process.cwd())
+
 import { createServer } from 'http'
 import { parse } from 'url'
 import next from 'next'
