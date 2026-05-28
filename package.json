@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "ts-node server.ts",
+    "dev": "ts-node --project tsconfig.node.json -r tsconfig-paths/register server.ts",
     "build": "next build",
-    "start": "NODE_ENV=production ts-node server.ts",
+    "start": "NODE_ENV=production ts-node --project tsconfig.node.json -r tsconfig-paths/register server.ts",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -46,10 +46,11 @@
     "tailwindcss": "^3.4.13",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.6.3"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node --project tsconfig.node.json -r tsconfig-paths/register prisma/seed.ts"
   },
   "jest": {
     "preset": "ts-jest",
@@ -57,6 +58,8 @@
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     },
-    "testMatch": ["**/tests/**/*.test.ts"]
+    "testMatch": [
+      "**/tests/**/*.test.ts"
+    ]
   }
 }
