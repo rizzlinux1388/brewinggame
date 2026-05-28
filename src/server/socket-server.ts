@@ -25,6 +25,7 @@ type ParticipantRow = {
   type: string
   aiDifficulty?: string | null
   isConnected: boolean
+  user?: { username: string | null; name: string | null } | null
 }
 
 const AI_MOVE_DELAY_MS = 900
@@ -95,7 +96,24 @@ export function initSocketServer(io: TypedIO) {
           }
         }
 
-        cb({ success: true })
+        cb({
+          success: true,
+          room: {
+            definition: room.gameDefinition.schema as unknown as GameDefinition,
+            seats: room.participants.map((p: ParticipantRow) => ({
+              seatPosition: p.seatPosition,
+              userId: p.userId,
+              username:
+                p.type === 'AI'
+                  ? `AI (${p.aiDifficulty ?? 'medium'})`
+                  : (p.user?.username ?? p.user?.name ?? 'Player'),
+              isAI: p.type === 'AI',
+              isConnected: p.isConnected,
+            })),
+            hostId: room.hostId,
+            status: room.status,
+          },
+        })
       } catch (err) {
         console.error('room:join error', err)
         cb({ success: false, error: 'Server error' })

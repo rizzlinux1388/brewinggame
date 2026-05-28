@@ -89,7 +89,16 @@ export type GameEndedData = {
 export interface ClientToServerEvents {
   'room:join': (
     payload: { roomId: string; userId?: string; token: string },
-    cb: AckCallback<{ success: boolean; error?: string }>
+    cb: AckCallback<{
+      success: boolean
+      error?: string
+      room?: {
+        definition: GameDefinition
+        seats: ParticipantView[]
+        hostId: string | null
+        status: string
+      }
+    }>
   ) => void
   'room:leave': (payload: { roomId: string }) => void
   'room:ready': (payload: { roomId: string }) => void

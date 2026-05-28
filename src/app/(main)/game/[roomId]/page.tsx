@@ -43,7 +43,7 @@ export default function GameRoomPage() {
         roomId={roomId}
         definition={store.definition}
         seats={store.seats}
-        isHost={store.seats[0]?.userId === userId}
+        isHost={store.hostId === userId}
         socket={socket}
         maxPlayers={store.definition?.maxPlayers ?? 4}
         roomCode={roomId.slice(-6).toUpperCase()}

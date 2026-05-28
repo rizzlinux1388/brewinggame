@@ -16,6 +16,15 @@ export function useSocket(roomId: string, userId?: string | null) {
     socket.emit('room:join', { roomId, userId: userId ?? undefined, token: '' }, (res) => {
       if (!res.success) {
         console.error('Failed to join room:', res.error)
+        return
+      }
+      if (res.room) {
+        store.setDefinition(res.room.definition)
+        store.setSeats(res.room.seats)
+        store.setHostId(res.room.hostId)
+        store.setStatus(res.room.status === 'IN_PROGRESS' ? 'playing' : 'waiting')
+        const mySeat = res.room.seats.find((s) => s.userId === userId)?.seatPosition
+        if (mySeat !== undefined) store.setMySeat(mySeat)
       }
     })
 

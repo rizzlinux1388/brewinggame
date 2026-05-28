@@ -14,6 +14,7 @@ type GameStatus = 'idle' | 'waiting' | 'playing' | 'ended'
 
 interface GameStore {
   roomId: string | null
+  hostId: string | null
   status: GameStatus
   definition: GameDefinition | null
   seats: ParticipantView[]
@@ -27,6 +28,7 @@ interface GameStore {
   chatMessages: { userId: string | null; username: string; message: string; ts: number }[]
 
   setRoom: (roomId: string) => void
+  setHostId: (id: string | null) => void
   setDefinition: (def: GameDefinition) => void
   setSeats: (seats: ParticipantView[]) => void
   setMySeat: (seat: number) => void
@@ -43,6 +45,7 @@ interface GameStore {
 
 const initialState = {
   roomId: null,
+  hostId: null,
   status: 'idle' as GameStatus,
   definition: null,
   seats: [],
@@ -60,6 +63,7 @@ export const useGameStore = create<GameStore>((set) => ({
   ...initialState,
 
   setRoom: (roomId) => set({ roomId }),
+  setHostId: (hostId) => set({ hostId }),
   setDefinition: (definition) => set({ definition }),
   setSeats: (seats) => set({ seats }),
   setMySeat: (mySeat) => set({ mySeat }),
