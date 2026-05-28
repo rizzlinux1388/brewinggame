@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import type { ParticipantView } from '@/types/socket-events'
 import type { GameDefinition } from '@/types/game-definition'
 import type { TypedClientSocket } from '@/lib/socket-client'
@@ -15,6 +16,12 @@ type Props = {
 }
 
 export function WaitingRoom({ roomId, definition, seats, isHost, socket, maxPlayers, roomCode }: Props) {
+  const router = useRouter()
+
+  async function closeRoom() {
+    await fetch(`/api/rooms/${roomId}`, { method: 'DELETE' })
+    router.push('/lobby')
+  }
   const connected = seats.filter((s) => s.isConnected || !s.isAI).length
   const canStart = connected >= (definition?.minPlayers ?? 2)
 
@@ -66,13 +73,21 @@ export function WaitingRoom({ roomId, definition, seats, isHost, socket, maxPlay
       </div>
 
       {isHost && (
-        <button
-          onClick={() => socket.emit('room:start', { roomId })}
-          disabled={!canStart}
-          className="btn-primary px-10 py-3 text-lg disabled:opacity-50"
-        >
-          Start Game
-        </button>
+        <div className="flex flex-col items-center gap-3">
+          <button
+            onClick={() => socket.emit('room:start', { roomId })}
+            disabled={!canStart}
+            className="btn-primary px-10 py-3 text-lg disabled:opacity-50"
+          >
+            Start Game
+          </button>
+          <button
+            onClick={closeRoom}
+            className="btn-danger text-sm px-6 py-2"
+          >
+            Close Room
+          </button>
+        </div>
       )}
 
       {!isHost && (

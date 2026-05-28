@@ -1,8 +1,0 @@
-Claude, read this file for my notes to you.
-
-I was able to start a game of war and hearts but was not able to play any cards. 
-Also, all the suits are black. So there are black diamonds and hearts instead of red.
-
-There's no way to close the rooms.
-
-Sometimes there are more AI bots to choose from than there are players. For example, War is only 2 players, yet 1 - 3 AI bots can be chosen.

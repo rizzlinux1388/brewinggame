@@ -23,9 +23,9 @@ export type AckCallback<T = void> = (result: T) => void
 // ─── Move Payloads ────────────────────────────────────────────────────────────
 
 export type GameMovePayload =
-  | { roomId: string; type: 'play-card'; cards: CardView[] }
+  | { roomId: string; type: 'play-card'; cards: CardInHand[] }
   | { roomId: string; type: 'bid'; amount: number }
-  | { roomId: string; type: 'pass-cards'; cards: CardView[]; direction: string }
+  | { roomId: string; type: 'pass-cards'; cards: CardInHand[]; direction: string }
   | { roomId: string; type: 'draw-card' }
   | { roomId: string; type: 'declare'; declaration: string }
   | { roomId: string; type: 'skip' }

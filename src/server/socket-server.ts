@@ -391,6 +391,19 @@ function buildYourTurn(state: EngineGameState, seatPosition: number) {
       type: 'bid' as const,
       range: moveConfig.bidRange,
     })
+  } else if (moveConfig?.type === 'pass-cards') {
+    const count = moveConfig.passCount ?? 3
+    const direction = moveConfig.passDirection ?? 'left'
+    validMoves.push({
+      type: 'pass-cards' as const,
+      count,
+      direction,
+      eligibleCards: state.players[seatPosition].hand.map((c) => ({
+        id: c.id,
+        suitId: c.suitId,
+        rankId: c.rankId,
+      })),
+    })
   }
 
   return { validMoves }
@@ -517,14 +530,14 @@ function payloadToMove(payload: GameMovePayload): ApplyMoveInput {
     case 'play-card':
       return {
         type: 'play-card',
-        card: { id: `${payload.cards[0].rankId}-${payload.cards[0].suitId}-0`, ...payload.cards[0], value: 0 },
+        card: { ...payload.cards[0], value: 0 },
       }
     case 'bid':
       return { type: 'bid', amount: payload.amount }
     case 'pass-cards':
       return {
         type: 'pass-cards',
-        cards: payload.cards.map((c) => ({ id: `${c.rankId}-${c.suitId}-0`, ...c, value: 0 })),
+        cards: payload.cards.map((c) => ({ ...c, value: 0 })),
         direction: payload.direction,
       }
     case 'draw-card':

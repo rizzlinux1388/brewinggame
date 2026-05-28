@@ -34,7 +34,7 @@ export function PlayerHand({ hand, validMoves, isMyTurn, roomId, socket }: Props
       if (!eligibleIds.has(card.id)) return
       socket.emit(
         'game:move',
-        { roomId, type: 'play-card', cards: [{ suitId: card.suitId, rankId: card.rankId }] },
+        { roomId, type: 'play-card', cards: [{ id: card.id, suitId: card.suitId, rankId: card.rankId }] },
         () => {}
       )
       setSelectedCard(null)
@@ -53,7 +53,7 @@ export function PlayerHand({ hand, validMoves, isMyTurn, roomId, socket }: Props
     if (selectedForPass.size !== passCount) return
     const cards = hand
       .filter((c) => selectedForPass.has(c.id))
-      .map((c) => ({ suitId: c.suitId, rankId: c.rankId }))
+      .map((c) => ({ id: c.id, suitId: c.suitId, rankId: c.rankId }))
 
     socket.emit(
       'game:move',

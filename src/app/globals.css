@@ -44,7 +44,7 @@
 
 /* Card styles */
 .playing-card {
-  @apply relative select-none cursor-pointer rounded-lg border-2 border-card-border bg-card-bg text-card-black shadow-card transition-all duration-150;
+  @apply relative select-none cursor-pointer rounded-lg border-2 border-card-border bg-card-bg shadow-card transition-all duration-150;
   aspect-ratio: 2.5 / 3.5;
 }
 

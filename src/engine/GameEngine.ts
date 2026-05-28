@@ -153,27 +153,26 @@ export class GameEngine {
     events: GameEvent[]
   ): void {
     const player = state.players[seat]
+    // Use the actual card object from hand to preserve its value for trick resolution
+    const actualCard = player.hand.find((c) => c.id === card.id) ?? card
     player.hand = player.hand.filter((c) => c.id !== card.id)
 
     if (state.currentTrick.length === 0) {
-      state.trickLeadSuit = card.suitId
+      state.trickLeadSuit = actualCard.suitId
     }
 
     // Track broken suits (hearts rule, etc.)
-    if (card.suitId !== state.trickLeadSuit && state.currentTrick.length === 0) {
-      state.brokenSuits.add(card.suitId)
-    }
-    if (card.suitId !== state.trickLeadSuit && state.currentTrick.length > 0) {
-      // Off-suit played — this might count as "breaking" the suit in some games
+    if (actualCard.suitId !== state.trickLeadSuit && state.currentTrick.length === 0) {
+      state.brokenSuits.add(actualCard.suitId)
     }
     // Hearts: playing a heart breaks hearts
-    if (card.suitId === 'hearts' && !state.brokenSuits.has('hearts')) {
+    if (actualCard.suitId === 'hearts' && !state.brokenSuits.has('hearts')) {
       state.brokenSuits.add('hearts')
       events.push({ type: 'suit-broken', suitId: 'hearts' })
     }
 
-    state.currentTrick.push({ seatPosition: seat, card })
-    events.push({ type: 'card-played', seatPosition: seat, card })
+    state.currentTrick.push({ seatPosition: seat, card: actualCard })
+    events.push({ type: 'card-played', seatPosition: seat, card: actualCard })
 
     if (state.currentTrick.length === state.players.length) {
       this.resolveTrick(state, events)
@@ -328,11 +327,13 @@ export class GameEngine {
   ): void {
     const player = state.players[seat]
     const cardIds = new Set(cards.map((c) => c.id))
+    // Look up actual card objects from hand to preserve values
+    const actualCards = player.hand.filter((c) => cardIds.has(c.id))
     player.hand = player.hand.filter((c) => !cardIds.has(c.id))
-    player.passedCards = cards
+    player.passedCards = actualCards
     state.passPhaseComplete.add(seat)
 
-    events.push({ type: 'cards-passed', from: seat, to: -1, cards })
+    events.push({ type: 'cards-passed', from: seat, to: -1, cards: actualCards })
 
     if (state.passPhaseComplete.size === state.players.length) {
       this.resolveCardExchange(state, events)
@@ -431,6 +432,12 @@ export class GameEngine {
       } else if (moveConfig.type === 'bid' && moveConfig.bidRange) {
         for (let i = moveConfig.bidRange.min; i <= moveConfig.bidRange.max; i++) {
           moves.push({ type: 'bid', amount: i })
+        }
+      } else if (moveConfig.type === 'pass-cards') {
+        if (!state.passPhaseComplete.has(seatPosition)) {
+          const count = moveConfig.passCount ?? 3
+          const direction = moveConfig.passDirection ?? 'left'
+          moves.push({ type: 'pass-cards', cards: player.hand.slice(0, count), direction })
         }
       } else if (moveConfig.type === 'draw-card') {
         moves.push({ type: 'draw-card' })

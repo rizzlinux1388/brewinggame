@@ -32,7 +32,7 @@ export default function LobbyPage() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [selectedGame, setSelectedGame] = useState<GameDef | null>(null)
   const [creating, setCreating] = useState(false)
-  const [aiCount, setAiCount] = useState(3)
+  const [aiCount, setAiCount] = useState(1)
 
   useEffect(() => {
     fetch('/api/game-definitions?builtIn=true')
@@ -42,6 +42,13 @@ export default function LobbyPage() {
       .then((r) => r.json())
       .then(setRooms)
   }, [])
+
+  useEffect(() => {
+    if (selectedGame) {
+      const max = selectedGame.maxPlayers - 1
+      setAiCount((prev) => Math.min(prev, max))
+    }
+  }, [selectedGame])
 
   async function createRoom(mode: 'REALTIME' | 'AI_SOLO') {
     if (!selectedGame) return
@@ -117,7 +124,7 @@ export default function LobbyPage() {
 
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-400">AI opponents:</span>
-                  {[1, 2, 3].map((n) => (
+                  {Array.from({ length: selectedGame.maxPlayers - 1 }, (_, i) => i + 1).map((n) => (
                     <button
                       key={n}
                       onClick={() => setAiCount(n)}
