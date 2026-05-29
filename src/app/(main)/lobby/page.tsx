@@ -21,6 +21,7 @@ type Room = {
   status: string
   mode: string
   maxPlayers: number
+  hostId: string | null
   gameDefinition: { name: string; minPlayers: number; maxPlayers: number }
   participants: { seatPosition: number; type: string }[]
 }
@@ -34,6 +35,14 @@ export default function LobbyPage() {
   const [selectedGame, setSelectedGame] = useState<GameDef | null>(null)
   const [creating, setCreating] = useState(false)
   const [aiCount, setAiCount] = useState(1)
+  const [closingRoomId, setClosingRoomId] = useState<string | null>(null)
+
+  async function closeRoom(roomId: string) {
+    setClosingRoomId(roomId)
+    await fetch(`/api/rooms/${roomId}`, { method: 'DELETE' })
+    setRooms((prev) => prev.filter((r) => r.id !== roomId))
+    setClosingRoomId(null)
+  }
 
   useEffect(() => {
     Promise.all([
@@ -204,12 +213,23 @@ export default function LobbyPage() {
                         <span className="font-mono text-emerald-400">{room.code}</span>
                       </div>
                     </div>
-                    <Link
-                      href={`/game/${room.id}`}
-                      className="btn-secondary text-xs px-3 py-1"
-                    >
-                      Join
-                    </Link>
+                    <div className="flex gap-2 items-center">
+                      <Link
+                        href={`/game/${room.id}`}
+                        className="btn-secondary text-xs px-3 py-1"
+                      >
+                        Join
+                      </Link>
+                      {room.hostId === session?.user?.id && (
+                        <button
+                          onClick={() => closeRoom(room.id)}
+                          disabled={closingRoomId === room.id}
+                          className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50 px-2 py-1 rounded border border-red-800 hover:border-red-600 transition-colors"
+                        >
+                          Close
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

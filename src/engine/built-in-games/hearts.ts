@@ -87,8 +87,7 @@ export const heartsDefinition: GameDefinition = {
       repeats: 'until-hand-empty',
       turnOrder: {
         direction: 'clockwise',
-        startsWith: 'player-position',
-        startPosition: 0,
+        startsWith: 'left-of-dealer',
       },
       playerMoves: [
         {

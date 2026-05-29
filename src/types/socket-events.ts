@@ -119,6 +119,7 @@ export interface ServerToClientEvents {
   'room:all-ready': (data: { startsIn: number }) => void
   'room:game-started': (data: GameStartedData) => void
   'game:state-update': (data: GameStateUpdate) => void
+  'game:card-played': (data: { seatPosition: number; card: CardView }) => void
   'game:phase-changed': (data: { phaseId: string; phase: PhaseConfig }) => void
   'game:trick-complete': (data: TrickCompleteData) => void
   'game:hand-complete': (data: HandCompleteData) => void

@@ -85,7 +85,9 @@ export function PlayerHand({ hand, validMoves, isMyTurn, roomId, socket }: Props
 
       <div className="flex items-end justify-center" style={{ gap: hand.length > 8 ? '-8px' : '4px' }}>
         {hand.map((card, i) => {
-          const isEligible = isMyTurn && (eligibleIds.has(card.id) || !!passCardMove)
+          const isInPlayMode = !!playCardMove || !!passCardMove
+          const isEligible = eligibleIds.has(card.id) || !!passCardMove
+          const isDisabled = isInPlayMode && !isEligible
           const isSelected = selectedForPass.has(card.id) || selectedCard === card.id
 
           return (
@@ -102,7 +104,7 @@ export function PlayerHand({ hand, validMoves, isMyTurn, roomId, socket }: Props
                 rankId={card.rankId}
                 faceUp
                 selected={isSelected}
-                disabled={!isEligible}
+                disabled={isDisabled}
                 onClick={() => handleCardClick(card)}
                 size="md"
               />

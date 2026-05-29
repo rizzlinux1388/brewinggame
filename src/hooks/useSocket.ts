@@ -46,6 +46,18 @@ export function useSocket(roomId: string, userId?: string | null) {
 
     socket.on('game:state-update', (data) => {
       store.setGameState(data)
+      if (data.trickCards.length > 0) {
+        store.setLastTrick(null)
+      }
+    })
+
+    socket.on('game:card-played', (data) => {
+      const seats = useGameStore.getState().seats
+      const seat = seats.find((s) => s.seatPosition === data.seatPosition)
+      const name = seat ? (seat.isAI ? `🤖 ${seat.username}` : seat.username) : `Seat ${data.seatPosition + 1}`
+      const suitSymbols: Record<string, string> = { hearts: '♥', diamonds: '♦', clubs: '♣', spades: '♠' }
+      const suit = suitSymbols[data.card.suitId] ?? data.card.suitId
+      store.addLogEntry({ type: 'trick', message: `${name} played ${data.card.rankId}${suit}`, ts: Date.now() })
     })
 
     socket.on('game:your-hand', (data) => {
@@ -121,6 +133,7 @@ export function useSocket(roomId: string, userId?: string | null) {
     return () => {
       socket.off('room:game-started')
       socket.off('game:state-update')
+      socket.off('game:card-played')
       socket.off('game:your-hand')
       socket.off('game:your-turn')
       socket.off('game:phase-changed')

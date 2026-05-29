@@ -129,6 +129,7 @@ export class ScoringEngine {
     state: EngineGameState
   ): number {
     if (event.formula.type === 'fixed') return event.formula.value
+    if (event.formula.type === 'bid-based') return this.computeBidFormula(event, seat, state)
     return 0
   }
 

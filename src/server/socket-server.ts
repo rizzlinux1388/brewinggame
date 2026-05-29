@@ -29,6 +29,7 @@ type ParticipantRow = {
 }
 
 const AI_MOVE_DELAY_MS = 900
+const BOT_NAMES = ['Alex', 'Blake', 'Casey', 'Dana', 'Ellis', 'Fran', 'Gray', 'Harper']
 
 export function initSocketServer(io: TypedIO) {
   io.on('connection', (socket: TypedSocket) => {
@@ -124,7 +125,7 @@ export function initSocketServer(io: TypedIO) {
       try {
         const room = await prisma.gameRoom.findUnique({
           where: { id: payload.roomId },
-          include: { participants: true, gameDefinition: true },
+          include: { participants: { include: { user: { select: { username: true, name: true } } } }, gameDefinition: true },
         })
 
         if (!room || room.hostId !== socket.data.userId) return
@@ -155,7 +156,9 @@ export function initSocketServer(io: TypedIO) {
           seatAssignments: room.participants.map((p: ParticipantRow) => ({
             seatPosition: p.seatPosition,
             userId: p.userId,
-            username: p.type === 'AI' ? `AI (${p.aiDifficulty ?? 'medium'})` : 'Player',
+            username: p.type === 'AI'
+              ? BOT_NAMES[p.seatPosition % BOT_NAMES.length]
+              : (p.user?.username ?? p.user?.name ?? 'Player'),
             isAI: p.type === 'AI',
             isConnected: p.isConnected,
           })),
@@ -247,7 +250,12 @@ export function initSocketServer(io: TypedIO) {
           },
         })
 
-        io.to(payload.roomId).emit('game:state-update', buildStateUpdate(payload.roomId, newState))
+        if (payload.type === 'play-card' && payload.cards[0]) {
+          io.to(payload.roomId).emit('game:card-played', {
+            seatPosition: participant.seatPosition,
+            card: { suitId: payload.cards[0].suitId, rankId: payload.cards[0].rankId },
+          })
+        }
 
         for (const event of result.events) {
           if (event.type === 'trick-complete') {
@@ -287,6 +295,8 @@ export function initSocketServer(io: TypedIO) {
             })
           }
         }
+
+        io.to(payload.roomId).emit('game:state-update', buildStateUpdate(payload.roomId, newState))
 
         if (!newState.isGameOver) {
           // Update hands for all players
@@ -466,7 +476,12 @@ function maybeScheduleAIMove(
         },
       })
 
-      io.to(roomId).emit('game:state-update', buildStateUpdate(roomId, result.newState))
+      if (aiMove.type === 'play-card') {
+        io.to(roomId).emit('game:card-played', {
+          seatPosition: currentParticipant.seatPosition,
+          card: { suitId: aiMove.card.suitId, rankId: aiMove.card.rankId },
+        })
+      }
 
       for (const event of result.events) {
         if (event.type === 'trick-complete') {
@@ -506,6 +521,8 @@ function maybeScheduleAIMove(
           })
         }
       }
+
+      io.to(roomId).emit('game:state-update', buildStateUpdate(roomId, result.newState))
 
       if (!result.newState.isGameOver) {
         // Update hands for all connected players after every AI move

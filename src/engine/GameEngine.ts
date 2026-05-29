@@ -161,14 +161,21 @@ export class GameEngine {
       state.trickLeadSuit = actualCard.suitId
     }
 
-    // Track broken suits (hearts rule, etc.)
-    if (actualCard.suitId !== state.trickLeadSuit && state.currentTrick.length === 0) {
+    // Off-suit play (following) breaks that suit so it can be led in future rounds
+    if (state.currentTrick.length > 0 && actualCard.suitId !== state.trickLeadSuit && !state.brokenSuits.has(actualCard.suitId)) {
       state.brokenSuits.add(actualCard.suitId)
+      events.push({ type: 'suit-broken', suitId: actualCard.suitId })
     }
-    // Hearts: playing a heart breaks hearts
-    if (actualCard.suitId === 'hearts' && !state.brokenSuits.has('hearts')) {
-      state.brokenSuits.add('hearts')
-      events.push({ type: 'suit-broken', suitId: 'hearts' })
+    // Leading a hearts-type restricted suit (when forced — only that suit left) also breaks it
+    if (state.currentTrick.length === 0 && !state.brokenSuits.has(actualCard.suitId)) {
+      const phaseConstraints = state.phase.playerMoves[0]?.cardConstraints ?? []
+      const hasCannotLead = phaseConstraints.some(
+        (c) => c.rule.type === 'cannot-lead' && (c.rule as { suitId: string }).suitId === actualCard.suitId
+      )
+      if (hasCannotLead) {
+        state.brokenSuits.add(actualCard.suitId)
+        events.push({ type: 'suit-broken', suitId: actualCard.suitId })
+      }
     }
 
     state.currentTrick.push({ seatPosition: seat, card: actualCard })
