@@ -5,6 +5,12 @@ import { getSocket, connectSocket } from '@/lib/socket-client'
 import { useGameStore } from '@/store/gameStore'
 import type { TypedClientSocket } from '@/lib/socket-client'
 
+function seatName(seatPosition: number): string {
+  const seats = useGameStore.getState().seats
+  const seat = seats.find((s) => s.seatPosition === seatPosition)
+  return seat ? (seat.isAI ? `🤖 ${seat.username}` : seat.username) : `Seat ${seatPosition + 1}`
+}
+
 export function useSocket(roomId: string, userId?: string | null) {
   const socketRef = useRef<TypedClientSocket | null>(null)
   const store = useGameStore()
@@ -32,6 +38,7 @@ export function useSocket(roomId: string, userId?: string | null) {
       store.setDefinition(data.definition)
       store.setSeats(data.seatAssignments)
       store.setStatus('playing')
+      store.addLogEntry({ type: 'game', message: `Game started — ${data.definition.name}`, ts: Date.now() })
 
       const mySeat = data.seatAssignments.find((s) => s.userId === userId)?.seatPosition
       if (mySeat !== undefined) store.setMySeat(mySeat)
@@ -49,18 +56,56 @@ export function useSocket(roomId: string, userId?: string | null) {
       store.setYourTurn(data)
     })
 
+    socket.on('game:phase-changed', (data) => {
+      store.addLogEntry({ type: 'phase', message: `— ${data.phase.label} —`, ts: Date.now() })
+    })
+
     socket.on('game:trick-complete', (data) => {
       store.setLastTrick(data)
       store.setYourTurn(null)
+
+      const totalPts = data.pointsScored.reduce((sum, p) => sum + p.points, 0)
+      const winnerName = seatName(data.winningSeat)
+      const msg = totalPts > 0
+        ? `${winnerName} won the trick (+${totalPts} pts)`
+        : `${winnerName} won the trick`
+      store.addLogEntry({ type: 'trick', message: msg, ts: Date.now() })
+
       setTimeout(() => store.setLastTrick(null), 2500)
     })
 
     socket.on('game:hand-complete', (data) => {
       store.setLastHand(data)
+
+      const seats = useGameStore.getState().seats
+      const scoreLines = data.scores
+        .sort((a, b) => a.seatPosition - b.seatPosition)
+        .map((s) => {
+          const name = seats.find((seat) => seat.seatPosition === s.seatPosition)?.username ?? `Seat ${s.seatPosition + 1}`
+          const prefix = s.roundPoints > 0 ? `+${s.roundPoints}` : `±0`
+          return `${name}: ${s.total} (${prefix})`
+        })
+        .join(', ')
+
+      const moonMsg = data.shootTheMoon
+        ? ` 🌙 ${seatName(data.shootTheMoon.seatPosition)} shot the moon!`
+        : ''
+
+      store.addLogEntry({
+        type: 'hand',
+        message: `Round over${moonMsg} · ${scoreLines}`,
+        ts: Date.now(),
+      })
     })
 
     socket.on('game:ended', (data) => {
       store.setGameResult(data)
+
+      const seats = useGameStore.getState().seats
+      const winners = data.winners
+        .map((w) => seats.find((s) => s.seatPosition === w.seatPosition)?.username ?? `Seat ${w.seatPosition + 1}`)
+        .join(', ')
+      store.addLogEntry({ type: 'game', message: `Game over — Winner: ${winners}`, ts: Date.now() })
     })
 
     socket.on('room:chat-message', (data) => {
@@ -78,6 +123,7 @@ export function useSocket(roomId: string, userId?: string | null) {
       socket.off('game:state-update')
       socket.off('game:your-hand')
       socket.off('game:your-turn')
+      socket.off('game:phase-changed')
       socket.off('game:trick-complete')
       socket.off('game:hand-complete')
       socket.off('game:ended')

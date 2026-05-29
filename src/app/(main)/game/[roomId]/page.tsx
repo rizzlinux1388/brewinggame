@@ -11,8 +11,8 @@ import { TrickPile } from '@/components/game/TrickPile'
 import { ScoreBoard } from '@/components/game/ScoreBoard'
 import { BidPanel } from '@/components/game/BidPanel'
 import { GameEndModal } from '@/components/game/GameEndModal'
+import { GameLog } from '@/components/game/GameLog'
 import { getSocket } from '@/lib/socket-client'
-import { useEffect as _useEffect } from 'react'
 
 export default function GameRoomPage() {
   const { roomId } = useParams<{ roomId: string }>()
@@ -60,13 +60,14 @@ export default function GameRoomPage() {
     <div className="min-h-screen flex flex-col" style={{ background: store.definition?.uiHints?.tableColor ?? '#1a6b3c' }}>
       {/* Table area */}
       <div className="flex-1 flex flex-col md:flex-row gap-4 p-4">
-        {/* Sidebar: scores */}
-        <aside className="md:w-56 shrink-0">
+        {/* Sidebar: scores + log */}
+        <aside className="md:w-56 shrink-0 flex flex-col gap-3">
           <ScoreBoard
             gameState={store.gameState}
             seats={store.seats}
             mySeat={store.mySeat}
           />
+          <GameLog entries={store.gameLog} />
         </aside>
 
         {/* Main table */}

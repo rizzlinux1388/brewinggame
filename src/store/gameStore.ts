@@ -12,6 +12,13 @@ import type { GameDefinition } from '@/types/game-definition'
 
 type GameStatus = 'idle' | 'waiting' | 'playing' | 'ended'
 
+export type GameLogEntry = {
+  id: string
+  type: 'trick' | 'hand' | 'phase' | 'game'
+  message: string
+  ts: number
+}
+
 interface GameStore {
   roomId: string | null
   hostId: string | null
@@ -26,6 +33,7 @@ interface GameStore {
   lastHand: HandCompleteData | null
   gameResult: GameEndedData | null
   chatMessages: { userId: string | null; username: string; message: string; ts: number }[]
+  gameLog: GameLogEntry[]
 
   setRoom: (roomId: string) => void
   setHostId: (id: string | null) => void
@@ -39,6 +47,7 @@ interface GameStore {
   setLastHand: (hand: HandCompleteData | null) => void
   setGameResult: (result: GameEndedData) => void
   addChatMessage: (msg: { userId: string | null; username: string; message: string; ts: number }) => void
+  addLogEntry: (entry: Omit<GameLogEntry, 'id'>) => void
   setStatus: (status: GameStatus) => void
   reset: () => void
 }
@@ -57,6 +66,7 @@ const initialState = {
   lastHand: null,
   gameResult: null,
   chatMessages: [],
+  gameLog: [],
 }
 
 export const useGameStore = create<GameStore>((set) => ({
@@ -76,6 +86,13 @@ export const useGameStore = create<GameStore>((set) => ({
   addChatMessage: (msg) =>
     set((state) => ({
       chatMessages: [...state.chatMessages.slice(-100), msg],
+    })),
+  addLogEntry: (entry) =>
+    set((state) => ({
+      gameLog: [
+        ...state.gameLog.slice(-300),
+        { ...entry, id: Math.random().toString(36).slice(2) },
+      ],
     })),
   setStatus: (status) => set({ status }),
   reset: () => set(initialState),
