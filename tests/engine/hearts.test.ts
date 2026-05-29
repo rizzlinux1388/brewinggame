@@ -113,8 +113,10 @@ describe('GameEngine - Hearts', () => {
       const state = GameEngine.initialize(heartsDefinition, fourPlayers)
       const trickState = skipToTrickPhase(state)
 
-      const otherPlayerCard = trickState.players[1].hand[0]
-      const result = MoveValidator.validate(trickState, 0, {
+      const actingSeat = trickState.currentTurn
+      const otherSeat = (actingSeat + 1) % 4
+      const otherPlayerCard = trickState.players[otherSeat].hand[0]
+      const result = MoveValidator.validate(trickState, actingSeat, {
         type: 'play-card',
         card: otherPlayerCard,
       })
