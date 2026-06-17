@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── NextAuth Models ──────────────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  username      String?   @unique
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  gamesPlayed Int @default(0)
+  gamesWon    Int @default(0)
+  totalScore  Int @default(0)
+
+  accounts        Account[]
+  sessions        Session[]
+  gameDefinitions GameDefinition[]
+  participants    Participant[]
+  gameHistories   GameHistory[]    @relation("GameHistoryPlayers")
+
+  @@index([username])
+}
+
+// ─── Game Definitions ─────────────────────────────────────────────────────────
+
+model GameDefinition {
+  id               String   @id @default(cuid())
+  name             String
+  description      String   @db.Text
+  isBuiltIn        Boolean  @default(false)
+  isPublished      Boolean  @default(false)
+  schema           Json
+  version          String   @default("1.0")
+  tags             String[]
+  minPlayers       Int
+  maxPlayers       Int
+  estimatedMinutes Int      @default(30)
+  createdByAI      Boolean  @default(false)
+  aiPrompt         String?  @db.Text
+  playCount        Int      @default(0)
+  rating           Float?
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rooms         GameRoom[]
+  gameHistories GameHistory[]
+
+  @@index([isBuiltIn])
+  @@index([isPublished])
+  @@index([authorId])
+}
+
+// ─── Game Rooms ───────────────────────────────────────────────────────────────
+
+enum RoomStatus {
+  WAITING
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  ABANDONED
+}
+
+enum GameMode {
+  REALTIME
+  ASYNC
+  AI_SOLO
+}
+
+model GameRoom {
+  id             String     @id @default(cuid())
+  code           String     @unique
+  status         RoomStatus @default(WAITING)
+  mode           GameMode   @default(REALTIME)
+  maxPlayers     Int
+  isPrivate      Boolean    @default(false)
+  password       String?
+  gameState      Json?
+  currentPhaseId String?
+  currentTurn    Int        @default(0)
+  roundNumber    Int        @default(1)
+  hostId         String?
+
+  gameDefinitionId String
+  gameDefinition   GameDefinition @relation(fields: [gameDefinitionId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  participants Participant[]
+  moves        GameMove[]
+
+  @@index([status])
+  @@index([code])
+  @@index([gameDefinitionId])
+}
+
+// ─── Participants ─────────────────────────────────────────────────────────────
+
+enum ParticipantType {
+  HUMAN
+  AI
+}
+
+model Participant {
+  id           String          @id @default(cuid())
+  seatPosition Int
+  type         ParticipantType @default(HUMAN)
+  aiDifficulty String?
+  isConnected  Boolean         @default(false)
+  lastSeenAt   DateTime?
+
+  currentScore Int  @default(0)
+  tricksTaken  Int  @default(0)
+  bid          Int?
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  roomId String
+  room   GameRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([roomId, seatPosition])
+  @@index([userId])
+  @@index([roomId])
+}
+
+// ─── Game Moves ───────────────────────────────────────────────────────────────
+
+model GameMove {
+  id           String   @id @default(cuid())
+  roomId       String
+  room         GameRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  seatPosition Int
+  phaseId      String
+  moveType     String
+  payload      Json
+  stateAfter   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([roomId])
+  @@index([roomId, createdAt])
+}
+
+// ─── Game History ─────────────────────────────────────────────────────────────
+
+model GameHistory {
+  id              String   @id @default(cuid())
+  finalScores     Json
+  winnerIds       String[]
+  roundsPlayed    Int
+  durationSeconds Int
+
+  gameDefinitionId String
+  gameDefinition   GameDefinition @relation(fields: [gameDefinitionId], references: [id])
+
+  players User[] @relation("GameHistoryPlayers")
+
+  createdAt DateTime @default(now())
+
+  @@index([gameDefinitionId])
+}

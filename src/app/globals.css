@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --table-color: #1a6b3c;
+  }
+
+  body {
+    @apply bg-gray-950 text-gray-100 antialiased;
+  }
+
+  * {
+    @apply box-border;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-emerald-600 hover:bg-emerald-500 text-white focus:ring-emerald-500 px-4 py-2;
+  }
+
+  .btn-secondary {
+    @apply btn bg-gray-700 hover:bg-gray-600 text-gray-100 focus:ring-gray-500 px-4 py-2;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-700 hover:bg-red-600 text-white focus:ring-red-500 px-4 py-2;
+  }
+
+  .card-panel {
+    @apply bg-gray-900 border border-gray-800 rounded-xl p-6;
+  }
+
+  .input-field {
+    @apply w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent;
+  }
+}
+
+/* Card styles */
+.playing-card {
+  @apply relative select-none cursor-pointer rounded-lg border-2 border-card-border bg-card-bg shadow-card transition-all duration-150;
+  aspect-ratio: 2.5 / 3.5;
+}
+
+.playing-card.red-card {
+  @apply text-card-red;
+}
+
+.playing-card:hover:not(.disabled) {
+  @apply shadow-card-hover -translate-y-1;
+}
+
+.playing-card.selected {
+  @apply shadow-card-selected -translate-y-3 border-blue-400;
+}
+
+.playing-card.disabled {
+  @apply opacity-40 cursor-not-allowed;
+}
+
+/* Game table */
+.game-table {
+  background-color: var(--table-color);
+  @apply rounded-3xl shadow-2xl;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-600 rounded-full;
+}

@@ -1,0 +1,23 @@
+The log is pretty cool, let's make it more detailed though please. I'd like to see each card played into the trick and by whom.  Also in the scores table, it looks like the players are not labeled correctly. I took 0 tricks but somehow ended up with 20 points.
+
+In Hearts, I think the player who leads the first trick rotates from round to round. Currently I'm always leading.
+
+In go fish I cannot select a card to play. The cards are greyed out/transparent.
+
+In Crazy 8s and Go Fish, we're not playing tricks. In Crazy 8's I thought that when you cannot play a card you have to draw.
+
+In all games, the last card played into a hand/trick does not display. Let's leave it displayed and give the player a button to proceed, please.
+
+In War, playing the same card I thought results in a mini-game. Right now it's each player plays a card and if there's a draw there's still a winner.
+
+In Spades when placing a bid, the cards are currently greyed out/transparent making it difficult to see what's in the hand. Also since it's a partnership game, knowing who the partners are would be helpful. I think you can lead with Spades, but currently it's not letting me. And it doesn't appear that scoring based on bids is working.
+
+With custom games, we'll want players to be able to make a deck of cards.
+And the AI assistant should also interpret the rules and update the logic.
+I also want the players to be able to create games with visual tools and move cards around, which takes inspiration from playingcards.io and virtualtabletop.io
+
+Can we add name options to the bots and player. 
+
+When playing the game, instead of all the opponents cards at the top, can we make them so it goes around in a circle, like sitting a table.
+
+Also, closing rooms should be available directly in the lobby. Currently the room needs to be opened to close it.
